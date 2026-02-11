@@ -55,7 +55,7 @@ def print_header(text=""):
     """Print styled header box."""
     print()
     print(f"{Colors.CYAN}{Colors.BOLD}╔══════════════════════════════════════════════════════╗{Colors.RESET}")
-    print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.YELLOW}{Colors.BOLD}SCROLLSHOT{Colors.RESET} {Colors.DIM}v{VERSION}{Colors.RESET}  {Colors.GRAY}- Screenshot automation tool       {Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.YELLOW}{Colors.BOLD}SCROLLSHOT{Colors.RESET} {Colors.DIM}v{VERSION}{Colors.RESET}  {Colors.GRAY}- Screenshot automation tool     {Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
     print(f"{Colors.CYAN}{Colors.BOLD}╚══════════════════════════════════════════════════════╝{Colors.RESET}")
 
 
@@ -1388,10 +1388,13 @@ def main():
     border_overlay.destroy()
 
     # Completion message
+    box_w = 42
+    msg = f"Done! {i} screenshots captured."
+    padding = box_w - 2 - len(msg)  # 2 for leading spaces
     print()
-    print(f"  {Colors.GREEN}{Colors.BOLD}╔══════════════════════════════════════════╗{Colors.RESET}")
-    print(f"  {Colors.GREEN}{Colors.BOLD}║{Colors.RESET}  {Colors.GREEN}{Colors.BOLD}Done!{Colors.RESET} {Colors.WHITE}{i} screenshots captured.{Colors.RESET}         {Colors.GREEN}{Colors.BOLD}║{Colors.RESET}")
-    print(f"  {Colors.GREEN}{Colors.BOLD}╚══════════════════════════════════════════╝{Colors.RESET}")
+    print(f"  {Colors.GREEN}{Colors.BOLD}╔{'═' * box_w}╗{Colors.RESET}")
+    print(f"  {Colors.GREEN}{Colors.BOLD}║{Colors.RESET}  {Colors.GREEN}{Colors.BOLD}Done!{Colors.RESET} {Colors.WHITE}{i} screenshots captured.{Colors.RESET}{' ' * padding}{Colors.GREEN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"  {Colors.GREEN}{Colors.BOLD}╚{'═' * box_w}╝{Colors.RESET}")
     print(f"    {Colors.GRAY}Screenshots:{Colors.RESET} {Colors.CYAN}{output_dir}{Colors.RESET}")
     if txt_path.exists() and txt_path.stat().st_size > 0:
         print(f"    {Colors.GRAY}OCR text:   {Colors.RESET} {Colors.CYAN}{txt_path}{Colors.RESET}")
