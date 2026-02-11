@@ -1,6 +1,6 @@
 <div align="center">
 
-# scrollshot
+# Scrollshot
 
 **Automated Sequential Screenshot Capture with Auto-Scrolling**
 
