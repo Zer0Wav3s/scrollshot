@@ -18,6 +18,7 @@ Flow:
 """
 
 import platform
+import sys
 import time
 from pathlib import Path
 
@@ -25,51 +26,62 @@ import pyautogui
 from pynput import keyboard
 
 
-# ============================================================================
+VERSION = "1.1.0"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Terminal Colors
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class Colors:
     """ANSI color codes for terminal output."""
     RESET = "\033[0m"
     BOLD = "\033[1m"
     DIM = "\033[2m"
+    UNDERLINE = "\033[4m"
 
-    # Colors
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    CYAN = "\033[36m"
+    # Bright Colors
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
+    WHITE = "\033[97m"
     GRAY = "\033[90m"
 
-    @staticmethod
-    def success(text):
-        return f"{Colors.GREEN}{text}{Colors.RESET}"
 
-    @staticmethod
-    def info(text):
-        return f"{Colors.CYAN}{text}{Colors.RESET}"
+def print_header(text=""):
+    """Print styled header box."""
+    print()
+    print(f"{Colors.CYAN}{Colors.BOLD}╔══════════════════════════════════════════════════════╗{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}║{Colors.RESET}  {Colors.YELLOW}{Colors.BOLD}SCROLLSHOT{Colors.RESET} {Colors.DIM}v{VERSION}{Colors.RESET}  {Colors.GRAY}- Screenshot automation tool       {Colors.CYAN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}╚══════════════════════════════════════════════════════╝{Colors.RESET}")
 
-    @staticmethod
-    def warn(text):
-        return f"{Colors.YELLOW}{text}{Colors.RESET}"
 
-    @staticmethod
-    def error(text):
-        return f"{Colors.RED}{text}{Colors.RESET}"
+def print_success(text):
+    """Print green success message."""
+    print(f"  {Colors.GREEN}{Colors.BOLD}✓{Colors.RESET} {Colors.GREEN}{text}{Colors.RESET}")
 
-    @staticmethod
-    def bold(text):
-        return f"{Colors.BOLD}{text}{Colors.RESET}"
 
-    @staticmethod
-    def dim(text):
-        return f"{Colors.DIM}{text}{Colors.RESET}"
+def print_info(text):
+    """Print cyan info message."""
+    print(f"  {Colors.CYAN}→{Colors.RESET} {text}")
 
-    @staticmethod
-    def header(text):
-        return f"{Colors.BOLD}{Colors.BLUE}{text}{Colors.RESET}"
+
+def print_warning(text):
+    """Print yellow warning message."""
+    print(f"  {Colors.YELLOW}{Colors.BOLD}⚠{Colors.RESET} {Colors.YELLOW}{text}{Colors.RESET}")
+
+
+def print_error(text):
+    """Print red error message."""
+    print(f"  {Colors.RED}{Colors.BOLD}✗{Colors.RESET} {Colors.RED}{text}{Colors.RESET}")
+
+
+def print_divider():
+    """Print a subtle divider line."""
+    print(f"  {Colors.GRAY}{'─' * 52}{Colors.RESET}")
 
 
 class MonitorInfo:
@@ -155,36 +167,37 @@ def select_monitor():
 
     if len(monitors) == 1:
         m = monitors[0]
-        print(f"\n{Colors.info('→')} Single monitor: {Colors.bold(f'{m.width}×{m.height}')}")
+        print_info(f"Single monitor: {Colors.BOLD}{m.width}×{m.height}{Colors.RESET}")
         return m
 
-    print(f"\n{Colors.info('?')} Available monitors:")
-    print(Colors.dim("   " + "─" * 50))
+    print()
+    print_info(f"{Colors.BOLD}Available monitors:{Colors.RESET}")
+    print_divider()
     for i, m in enumerate(monitors, 1):
-        primary = Colors.dim(" (primary)") if m.is_primary else ""
-        print(f"   {Colors.bold(str(i))}. {m.name}: {m.width}×{m.height} at ({m.x}, {m.y}){primary}")
-    print(Colors.dim("   " + "─" * 50))
+        primary = f" {Colors.DIM}(primary){Colors.RESET}" if m.is_primary else ""
+        print(f"    {Colors.YELLOW}[{i}]{Colors.RESET} {m.name}: {Colors.BOLD}{m.width}×{m.height}{Colors.RESET} at ({m.x}, {m.y}){primary}")
+    print_divider()
 
     while True:
         try:
-            choice = input(f"\n   Select monitor {Colors.dim(f'[1-{len(monitors)}]')}: ").strip()
+            choice = input(f"\n    Select monitor {Colors.DIM}[1-{len(monitors)}]{Colors.RESET}: ").strip()
             if not choice:
-                print(Colors.warn("Cancelled."))
+                print_warning("Cancelled.")
                 return None
             idx = int(choice) - 1
             if 0 <= idx < len(monitors):
                 selected = monitors[idx]
-                print(f"   {Colors.success('✓')} Selected: {Colors.bold(f'{selected.width}×{selected.height}')}")
+                print_success(f"Selected: {Colors.BOLD}{selected.width}×{selected.height}{Colors.RESET}")
                 return selected
             else:
-                print(Colors.warn(f"   Please enter a number between 1 and {len(monitors)}"))
+                print_warning(f"Please enter a number between 1 and {len(monitors)}")
         except ValueError:
-            print(Colors.warn("   Invalid input. Enter a number or press Enter to cancel."))
+            print_warning("Invalid input. Enter a number or press Enter to cancel.")
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Native macOS Selection Overlay using PyObjC
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 # Import PyObjC components at module level to avoid class redefinition issues
 import objc
@@ -403,9 +416,9 @@ def get_selection_macos(monitor):
     return result["selection"]
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # macOS Selection using PyObjC window + pynput mouse events
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def get_selection_macos_pynput(monitor):
     """
@@ -637,9 +650,9 @@ def get_selection_macos_pynput(monitor):
     return None
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Fallback tkinter Selection Overlay
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def get_selection_tkinter(monitor):
     """Fallback selection using tkinter (for non-macOS)."""
@@ -711,9 +724,9 @@ def get_selection(monitor):
         return get_selection_tkinter(monitor)
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Selection Border Overlay (visible during capture)
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class SelectionBorderOverlay:
     """
@@ -785,9 +798,9 @@ class SelectionBorderOverlay:
             self.window = None
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # Screenshot Capture
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class EscapeListener:
     """Listens for Escape key press in a background thread."""
@@ -875,9 +888,9 @@ def smooth_scroll_pixels(pixels, steps=15, delay=0.015):
         time.sleep(delay)
 
 
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # OCR using macOS Vision Framework
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def clean_ocr_text(text):
     """
@@ -982,7 +995,7 @@ def ocr_image(image_path):
         )
 
         if result.returncode != 0:
-            print(f"  [OCR] Tesseract error: {result.stderr}")
+            print(f"  {Colors.GRAY}[OCR] Tesseract error: {result.stderr}{Colors.RESET}")
             return None
 
         text = result.stdout.strip()
@@ -991,13 +1004,13 @@ def ocr_image(image_path):
         return None
 
     except FileNotFoundError:
-        print("  [OCR] Tesseract not installed. Install with: brew install tesseract")
+        print(f"  {Colors.GRAY}[OCR] Tesseract not installed. Install with: brew install tesseract{Colors.RESET}")
         return None
     except subprocess.TimeoutExpired:
-        print("  [OCR] Tesseract timed out")
+        print(f"  {Colors.GRAY}[OCR] Tesseract timed out{Colors.RESET}")
         return None
     except Exception as e:
-        print(f"  [OCR] Error during text recognition: {e}")
+        print(f"  {Colors.GRAY}[OCR] Error during text recognition: {e}{Colors.RESET}")
         return None
 
 
@@ -1068,19 +1081,163 @@ def append_text_deduplicated(txt_path, new_text, overlap_lines=15):
             f.write("\n".join(non_overlapping) + "\n")
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# VERSION CHECK
+# ═══════════════════════════════════════════════════════════════════════════════
+
+GITHUB_REPO = "Zer0Wav3s/scrollshot"
+
+
+def check_for_latest_version():
+    """Check GitHub API for the latest release version."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["curl", "-s", "-m", "5",
+             f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0 and result.stdout:
+            import json
+            data = json.loads(result.stdout)
+            tag = data.get("tag_name", "")
+            return tag.lstrip("v") if tag else None
+    except Exception:
+        pass
+    return None
+
+
+def arrow_key_select(options, prompt="Select an option"):
+    """Interactive arrow-key selector for terminal menus."""
+    import tty
+    import termios
+
+    selected = 0
+
+    def render():
+        # Move up to re-render (clear previous)
+        for _ in range(len(options)):
+            sys.stdout.write("\033[A\033[K")
+        for i, opt in enumerate(options):
+            if i == selected:
+                print(f"  {Colors.CYAN}{Colors.BOLD}  ▸ {opt}{Colors.RESET}")
+            else:
+                print(f"  {Colors.DIM}    {opt}{Colors.RESET}")
+        sys.stdout.flush()
+
+    # Initial render
+    print(f"\n  {Colors.BOLD}{prompt}:{Colors.RESET}")
+    for i, opt in enumerate(options):
+        if i == selected:
+            print(f"  {Colors.CYAN}{Colors.BOLD}  ▸ {opt}{Colors.RESET}")
+        else:
+            print(f"  {Colors.DIM}    {opt}{Colors.RESET}")
+    sys.stdout.flush()
+
+    try:
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        tty.setcbreak(fd)
+
+        while True:
+            ch = sys.stdin.read(1)
+            if ch == '\x1b':
+                ch2 = sys.stdin.read(1)
+                if ch2 == '[':
+                    ch3 = sys.stdin.read(1)
+                    if ch3 == 'A':  # Up
+                        selected = (selected - 1) % len(options)
+                        render()
+                    elif ch3 == 'B':  # Down
+                        selected = (selected + 1) % len(options)
+                        render()
+            elif ch in ('\r', '\n'):
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                return selected
+    except (termios.error, ValueError, OSError):
+        # Fallback for non-TTY environments
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        try:
+            choice = input(f"\n  Enter choice (1-{len(options)}): ").strip()
+            return int(choice) - 1
+        except (ValueError, EOFError):
+            return 0
+
+
+def run_git_pull():
+    """Run git pull to update the tool to the latest version."""
+    import subprocess
+    import os
+
+    print()
+    print_info(f"{Colors.BOLD}Updating...{Colors.RESET}")
+    print_divider()
+
+    try:
+        script_dir = Path(__file__).parent
+
+        # Fetch latest
+        subprocess.run(
+            ["git", "fetch", "origin", "main"],
+            cwd=script_dir, capture_output=True, timeout=30
+        )
+
+        # Reset to latest
+        result = subprocess.run(
+            ["git", "reset", "--hard", "origin/main"],
+            cwd=script_dir, capture_output=True, text=True, timeout=30
+        )
+
+        if result.returncode == 0:
+            print_success("Updated successfully!")
+            print_info("Restarting...")
+            print()
+
+            # Clear pycache to avoid stale imports
+            pycache = script_dir / "__pycache__"
+            if pycache.exists():
+                import shutil
+                shutil.rmtree(pycache, ignore_errors=True)
+
+            # Restart the process
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
+            print_error(f"Update failed: {result.stderr}")
+    except Exception as e:
+        print_error(f"Update failed: {e}")
+
+
+def check_and_prompt_update():
+    """Check for updates and prompt user if a new version is available."""
+    latest = check_for_latest_version()
+    if latest and latest != VERSION:
+        print()
+        print(f"  {Colors.YELLOW}{Colors.BOLD}New version available: v{latest}{Colors.RESET}"
+              f"  {Colors.GRAY}(current: v{VERSION}){Colors.RESET}")
+
+        choice = arrow_key_select(
+            ["Update Now", "Continue"],
+            prompt="Would you like to update?"
+        )
+
+        if choice == 0:
+            run_git_pull()
+
+
 def main():
     """Main entry point."""
-    print(Colors.header("\n  Screenshot Automation Tool"))
-    print(Colors.dim("  " + "─" * 36))
+    check_and_prompt_update()
+    print_header()
 
     # Select monitor
     monitor = select_monitor()
     if monitor is None:
         return
 
-    print(f"\n{Colors.info('→')} A selection overlay will appear on the selected monitor.")
-    print(f"{Colors.info('→')} Click and drag to select the capture area.")
-    print(f"{Colors.dim('  Press Escape to cancel.')}\n")
+    print()
+    print_info("A selection overlay will appear on the selected monitor.")
+    print_info("Click and drag to select the capture area.")
+    print(f"  {Colors.DIM}  Press Escape to cancel.{Colors.RESET}\n")
 
     time.sleep(0.5)
 
@@ -1088,15 +1245,16 @@ def main():
     selection = get_selection(monitor)
 
     if selection is None:
-        print(Colors.warn("Selection cancelled or invalid. Exiting."))
+        print_warning("Selection cancelled or invalid. Exiting.")
         return
 
     x, y, width, height = selection
-    print(f"\n{Colors.success('✓')} Selected area: {Colors.bold(f'{width}×{height}')} at ({x}, {y})")
+    print()
+    print_success(f"Selected area: {Colors.BOLD}{width}×{height}{Colors.RESET} at ({x}, {y})")
 
     # Get number of screenshots
     user_input = input(
-        f"\n{Colors.info('?')} Number of screenshots {Colors.dim('(Enter for continuous)')}: "
+        f"\n  {Colors.CYAN}?{Colors.RESET} Number of screenshots {Colors.DIM}(Enter for continuous){Colors.RESET}: "
     ).strip()
 
     continuous_mode = False
@@ -1104,23 +1262,23 @@ def main():
 
     if user_input == "":
         continuous_mode = True
-        print(f"\n{Colors.warn('⚡')} {Colors.bold('CONTINUOUS MODE')}")
-        print(Colors.dim("   Press Escape at any time to stop capturing."))
+        print(f"\n  {Colors.YELLOW}{Colors.BOLD}⚡ CONTINUOUS MODE{Colors.RESET}")
+        print(f"  {Colors.DIM}  Press Escape at any time to stop capturing.{Colors.RESET}")
     else:
         try:
             num_screenshots = int(user_input)
             if num_screenshots < 1:
-                print(Colors.error("Must take at least 1 screenshot. Exiting."))
+                print_error("Must take at least 1 screenshot. Exiting.")
                 return
         except ValueError:
-            print(Colors.error("Invalid number. Exiting."))
+            print_error("Invalid number. Exiting.")
             return
 
     # Get scroll mode
-    print(f"\n{Colors.info('?')} Scroll mode:")
-    print(f"   {Colors.bold('1.')} Messages {Colors.dim('(85% scroll with overlap - for chats)')}")
-    print(f"   {Colors.bold('2.')} Page/PDF {Colors.dim('(110% scroll - for documents)')}")
-    scroll_mode = input(f"   Select {Colors.dim('[1/2, default: 1]')}: ").strip()
+    print(f"\n  {Colors.CYAN}?{Colors.RESET} {Colors.BOLD}Scroll mode:{Colors.RESET}")
+    print(f"    {Colors.YELLOW}[1]{Colors.RESET} Messages {Colors.DIM}(85% scroll with overlap - for chats){Colors.RESET}")
+    print(f"    {Colors.YELLOW}[2]{Colors.RESET} Page/PDF {Colors.DIM}(110% scroll - for documents){Colors.RESET}")
+    scroll_mode = input(f"    Select {Colors.DIM}[1/2, default: 1]{Colors.RESET}: ").strip()
     page_mode = (scroll_mode == "2")
 
     # Create output directory
@@ -1135,7 +1293,7 @@ def main():
     txt_file = output_dir / "extracted_text.txt"
     if txt_file.exists():
         txt_file.unlink()
-    print(Colors.dim(f"   Cleared previous files from {output_dir}"))
+    print(f"  {Colors.DIM}  Cleared previous files from {output_dir}{Colors.RESET}")
 
     # Initialize OCR text file
     txt_path = output_dir / "extracted_text.txt"
@@ -1148,15 +1306,20 @@ def main():
 
     import random
 
-    print(f"\n{Colors.header('Starting capture in 3 seconds...')}")
+    # Pre-capture summary
+    print()
+    print_divider()
+    print(f"  {Colors.BOLD}  Starting capture in 3 seconds...{Colors.RESET}")
     if continuous_mode:
-        print(f"   Mode:   {Colors.warn('Continuous')} {Colors.dim('(press Escape to stop)')}")
+        print(f"    Mode:   {Colors.YELLOW}{Colors.BOLD}Continuous{Colors.RESET} {Colors.DIM}(press Escape to stop){Colors.RESET}")
     else:
-        print(f"   Mode:   {Colors.info(f'{num_screenshots} screenshots')}")
+        print(f"    Mode:   {Colors.CYAN}{num_screenshots} screenshots{Colors.RESET}")
     if page_mode:
-        print(f"   Scroll: {Colors.info(f'{int(height * 1.1)}px')} {Colors.dim('(110% of selection)')}")
+        print(f"    Scroll: {Colors.CYAN}{int(height * 1.1)}px{Colors.RESET} {Colors.DIM}(110% of selection){Colors.RESET}")
     else:
-        print(f"   Scroll: {Colors.info(f'~{int(height * 0.85)}px')} {Colors.dim('(85% with overlap)')}")
+        print(f"    Scroll: {Colors.CYAN}~{int(height * 0.85)}px{Colors.RESET} {Colors.DIM}(85% with overlap){Colors.RESET}")
+    print_divider()
+    print(f"\n  {Colors.YELLOW}{Colors.BOLD}  Switch to your target application now!{Colors.RESET}\n")
     time.sleep(3)
 
     # Click middle-right of selection to ensure focus
@@ -1181,7 +1344,7 @@ def main():
         if not continuous_mode and i >= num_screenshots:
             break
         if continuous_mode and escape_listener.stopped:
-            print(f"\n\n{Colors.warn('⏹')}  Escape pressed - stopping capture.")
+            print(f"\n\n  {Colors.YELLOW}{Colors.BOLD}⏹{Colors.RESET}  Escape pressed - stopping capture.")
             break
 
         filename = output_dir / f"screenshot_{i + 1:03d}.png"
@@ -1190,17 +1353,17 @@ def main():
         time.sleep(0.15)  # Give window server time to fully hide the overlay
         capture_screenshot(selection, filename)
         border_overlay.show()  # Show border again
-        print(f"   {Colors.success('✓')} {filename.name}", end="")
+        print(f"   {Colors.GREEN}{Colors.BOLD}✓{Colors.RESET} {Colors.WHITE}{filename.name}{Colors.RESET}", end="")
 
         # Run OCR on the captured screenshot
         ocr_text = ocr_image(filename)
         if ocr_text:
             append_text_deduplicated(txt_path, ocr_text)
             word_count = len(ocr_text.split())
-            print(f" {Colors.dim('│')} OCR: {Colors.info(f'{word_count} words')}", end="")
+            print(f" {Colors.GRAY}│{Colors.RESET} OCR: {Colors.CYAN}{word_count} words{Colors.RESET}", end="")
 
         if continuous_mode:
-            print(f" {Colors.dim('(Esc to stop)')}", end="")
+            print(f" {Colors.DIM}(Esc to stop){Colors.RESET}", end="")
         print()
 
         i += 1
@@ -1224,15 +1387,20 @@ def main():
     # Fully release the border overlay
     border_overlay.destroy()
 
-    print(f"\n{Colors.success('✓')} {Colors.bold('Done!')} {i} screenshots saved")
-    print(f"   {Colors.dim('Screenshots:')} {output_dir}")
+    # Completion message
+    print()
+    print(f"  {Colors.GREEN}{Colors.BOLD}╔══════════════════════════════════════════╗{Colors.RESET}")
+    print(f"  {Colors.GREEN}{Colors.BOLD}║{Colors.RESET}  {Colors.GREEN}{Colors.BOLD}Done!{Colors.RESET} {Colors.WHITE}{i} screenshots captured.{Colors.RESET}         {Colors.GREEN}{Colors.BOLD}║{Colors.RESET}")
+    print(f"  {Colors.GREEN}{Colors.BOLD}╚══════════════════════════════════════════╝{Colors.RESET}")
+    print(f"    {Colors.GRAY}Screenshots:{Colors.RESET} {Colors.CYAN}{output_dir}{Colors.RESET}")
     if txt_path.exists() and txt_path.stat().st_size > 0:
-        print(f"   {Colors.dim('OCR text:   ')} {txt_path}")
+        print(f"    {Colors.GRAY}OCR text:   {Colors.RESET} {Colors.CYAN}{txt_path}{Colors.RESET}")
+    print()
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\nCancelled by user.")
-        exit(0)
+        print_info("Cancelled by user.")
+        sys.exit(0)

@@ -4,7 +4,7 @@
 
 **Automated Sequential Screenshot Capture with Auto-Scrolling**
 
-[![Version](https://img.shields.io/badge/Version-1.0.0-red?logo=github&logoColor=white)](https://github.com/Zer0Wav3s/scrollshot/releases)
+[![Version](https://img.shields.io/badge/Version-1.1.0-red?logo=github&logoColor=white)](https://github.com/Zer0Wav3s/scrollshot/releases)
 [![macOS](https://img.shields.io/badge/macOS-Quartz-blue?logo=apple&logoColor=white)](https://developer.apple.com/documentation/coregraphics)
 [![Python](https://img.shields.io/badge/Python-3.8+-green?logo=python&logoColor=white)](https://www.python.org)
 [![Tesseract](https://img.shields.io/badge/Tesseract-OCR-orange?logo=tesseract&logoColor=white)](https://github.com/tesseract-ocr/tesseract)
@@ -27,6 +27,8 @@ A macOS command-line tool for capturing sequential screenshots with automatic sc
 - **OCR Extraction**: Extracts text from screenshots with automatic deduplication
 - **Multi-Monitor Support**: Works across multiple displays
 - **Continuous Mode**: Keep capturing until you press Escape
+- **Auto-Update**: Checks GitHub for newer releases on startup with interactive arrow-key selector
+- **Polished Terminal UI**: Color-coded output with box-drawing characters and visual feedback
 
 ## Requirements
 
